@@ -1,4 +1,6 @@
-import { $removeBreakLines } from 'generic-functions.mlai';
+import { mlFn } from 'generic-functions.mlai';
+const { removeBreakLines } = mlFn;
+
 import XLSX from 'xlsx';
 
 /**
@@ -10,7 +12,7 @@ import XLSX from 'xlsx';
  * ```
  * Convert an excel file to an array of jsons
  * * 🚫 - needs a 'code' prop (aka:index)
- * * ⚠️ - calls $removeBreakLines from [generic-functions.mlai](https://www.npmjs.com/package/generic-functions.mlai)
+ * * ⚠️ - calls removeBreakLines from [generic-functions.mlai](https://www.npmjs.com/package/generic-functions.mlai)
  * * ✔️ - can take any excel file
  * ___
  * ```js
@@ -22,17 +24,15 @@ import XLSX from 'xlsx';
  * @param {String} pathOfFile
  * @returns object[]
  */
-export function $ExcelToJson(pathOfFile: any) {
+export function excelToJson(pathOfFile: any) {
     const tbData: any[] = [];
     const file = XLSX.readFile(pathOfFile, {
         cellDates: true,
         sheetStubs: true
     });
 
-    const list_sheets = file.SheetNames;
-
     // y = sheet Name
-    list_sheets.forEach((y: string | number) => {
+    file.SheetNames.forEach((y: string | number) => {
         const worksheet = file.Sheets[y];
         // headers = object of properties
         const headers: any = {};
@@ -42,7 +42,7 @@ export function $ExcelToJson(pathOfFile: any) {
             if (z[0] === '!' || !z[0]) {
                 continue;
             }
-            //parse column, row, and val
+            // parse column, row, and val
             let tt = 0;
             for (let i = 0; i < z.length; i++) {
                 // z = row name (aka:'A1')
@@ -60,22 +60,22 @@ export function $ExcelToJson(pathOfFile: any) {
             // get prop name (aka: 'code')
             val = worksheet[z].v;
 
-            //header names
-            if (row == 1) {
+            // header names
+            if (row === 1) {
                 // if val have '\n' in the string
-                if (val) headers[col] = $removeBreakLines(val);
+                if (val) headers[col] = removeBreakLines(val);
                 continue;
             }
-            if (!val || val == '') val = false;
+            if (!val || val === '') val = false;
             // because some row have x or X as values
-            if (val == 'x' || val == 'X') val = true;
+            if (val === 'x' || val === 'X') val = true;
             // tbData[row] = object identifier (aka: {code: 6})
             if (!tbData[row]) tbData[row] = {};
             // value of column
             tbData[row][headers[col]] = val;
         }
 
-        //remove first two rows because empty
+        // remove first two rows because empty
         tbData.shift();
         tbData.shift();
     });

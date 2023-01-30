@@ -25,9 +25,9 @@ pnpm i excel-to-json.mlai
 ## Example
 
 ```js
-import { $ExcelToJson } from 'excel-to-json.mlai';
+import { excelToJson } from 'excel-to-json.mlai';
 
-console.log($ExcelToJson(file));
+console.log(excelToJson(file));
 
 // prints: [{...}, {...}, {...}...]
 ```
@@ -41,7 +41,7 @@ All contributions are welcome!
 [size-badge]: https://badgen.net/bundlephobia/Mathieu-ai/ExcelToJson
 [issues-badge]: https://img.shields.io/github/issues/Mathieu-ai/ExcelToJson?style=for-the-badge
 [issues-url]: https://github.com/Mathieu-ai/ExcelToJson/issues
-[typescript-badge]: https://badges.frapsoft.com/typescript/code/typescript.svg?v=101
+[typescript-badge]: https://img.shields.io/badge/Language-Typescript-blue?style=for-the-badge
 [typescript-url]: https://github.com/microsoft/TypeScript
 
 ## License

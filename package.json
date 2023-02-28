@@ -1,6 +1,6 @@
 {
     "name": "excel-to-json.mlai",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Transform any excel file into a json",
     "main": "dist/cjs/index.js",
     "module": "dist/esm/index.js",
@@ -19,7 +19,7 @@
         "url": "https://github.com/Mathieu-ai/ExcelToJson.git"
     },
     "scripts": {
-        "build": "rm -rf dist/ && npm run build:esm && npm run build:cjs",
+        "build": "rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs",
         "build:esm": "tsc",
         "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
         "format": "prettier --write \"src/**/*.ts\""

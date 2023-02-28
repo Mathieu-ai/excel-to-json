@@ -29,7 +29,7 @@ export function excelToJson(pathOfFile: string) {
             const headers: any = {};
             let val: any;
             for (const cell in worksheet) {
-               // Skip non-data cells
+                // Skip non-data cells
                 if (cell[0] === '!' || !cell[0]) continue;
 
                 // Get column name (e.g. 'A')
@@ -60,7 +60,6 @@ export function excelToJson(pathOfFile: string) {
                 tbData[row][headers[col]] = val;
             }
         }
-
     } catch (error) {
         console.error('Error reading file:', error);
     }

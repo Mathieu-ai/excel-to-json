@@ -2,7 +2,8 @@
 
 [![npm version][npm-badge]][npm-url] [![Open issues][issues-badge]][issues-url] [![TypeScript][typescript-badge]][typescript-url]
 
-🚩 Transform your excel into a json
+* 💪 Transform your excel into a json
+* 📦 light library
 
 ## Install
 

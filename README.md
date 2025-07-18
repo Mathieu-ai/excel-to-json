@@ -1,6 +1,8 @@
 # excel-to-json.mlai
 
-[![npm version][npm-badge]][npm-url] [![Open issues][issues-badge]][issues-url] [![TypeScript][typescript-badge]][typescript-url]
+[![npm version](https://img.shields.io/npm/v/excel-to-json.mlai?color=blue&logo=npm)](https://www.npmjs.com/package/excel-to-json.mlai)
+[![Open issues](https://img.shields.io/github/issues/Mathieu-ai/excel-to-json?logo=github)](https://github.com/Mathieu-ai/excel-to-json/issues)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.x-blue?logo=typescript)](https://www.typescriptlang.org/)
 
 * 💪 Transform Excel files into JSON with advanced features
 * 📦 Lightweight library with minimal dependencies
@@ -30,15 +32,15 @@ pnpm i excel-to-json.mlai
 
 ## Features
 
-- ✅ Convert Excel files (.xlsx, .xls) to JSON
-- ✅ Support for multiple sheets
-- ✅ Fetch and convert online Excel files
-- ✅ Customizable date formatting
-- ✅ Header transformation
-- ✅ Value transformation
-- ✅ Skip empty rows/columns
-- ✅ Formula support
-- ✅ TypeScript support
+* ✅ Convert Excel files (.xlsx, .xls) to JSON
+* ✅ Support for multiple sheets
+* ✅ Fetch and convert online Excel files
+* ✅ Customizable date formatting
+* ✅ Header transformation
+* ✅ Value transformation
+* ✅ Skip empty rows/columns
+* ✅ Formula support
+* ✅ TypeScript support
 
 ## Usage
 
@@ -131,8 +133,8 @@ const data = excelToJsonSync('path/to/file.xlsx');
 Asynchronously converts Excel file to JSON.
 
 **Parameters:**
-- `input` (string | ArrayBuffer | Buffer): File path, URL, or buffer
-- `options` (ExcelToJsonOptions): Optional configuration
+* `input` (string | ArrayBuffer | Buffer): File path, URL, or buffer
+* `options` (ExcelToJsonOptions): Optional configuration
 
 **Returns:** Promise<Record<string, any>[] | Record<string, Record<string, any>[]>>
 
@@ -141,8 +143,8 @@ Asynchronously converts Excel file to JSON.
 Synchronously converts local Excel file to JSON.
 
 **Parameters:**
-- `filePath` (string): Local file path only
-- `options` (ExcelToJsonOptions): Optional configuration
+* `filePath` (string): Local file path only
+* `options` (ExcelToJsonOptions): Optional configuration
 
 **Returns:** Record<string, any>[] | Record<string, Record<string, any>[]>
 
@@ -242,6 +244,3 @@ All contributions are welcome! Please read our contributing guidelines.
 ## License
 
 excel-to-json.mlai is [MIT licensed](LICENSE).
-
-[npm-url]: https://www.npmjs.com/package/excel-to-json.mlai
-[npm-badge]: https://img.shields.io/n

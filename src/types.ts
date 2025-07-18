@@ -49,15 +49,11 @@ export type ExcelCellType =
     | 's'   // String
     | 'str' // String (formula result)
     | 'e';  // Error
-
 /** Input types accepted by the converter. */
 export type ExcelInput = string | ArrayBuffer | Buffer;
-
 /** Return type for single sheet conversion. */
 export type SingleSheetResult = Record<string, any>[];
-
 /** Return type for multiple sheet conversion. */
 export type MultiSheetResult = Record<string, Record<string, any>[]>;
-
 /** Combined return type. */
 export type ExcelToJsonResult = SingleSheetResult | MultiSheetResult;

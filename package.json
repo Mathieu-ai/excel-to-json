@@ -1,22 +1,11 @@
 {
     "name": "excel-to-json.mlai",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Transform any excel file into JSON with support for multiple sheets and online files",
+    "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
-    },
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
     "keywords": [
         "excel",
         "json",
@@ -30,12 +19,46 @@
         "type": "git",
         "url": "https://github.com/Mathieu-ai/ExcelToJson.git"
     },
-    "scripts": {
-        "build": "npm run clean && tsc",
-        "clean": "rm -rf dist/",
-        "format": "prettier --write \"src/**/*.ts\"",
-        "prepublishOnly": "npm run build"
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./library": {
+            "import": "./dist/library/index.js",
+            "require": "./dist/library/index.js",
+            "types": "./dist/library/index.d.ts"
+        },
+        "./library/converter": {
+            "import": "./dist/library/converter.js",
+            "require": "./dist/library/converter.js",
+            "types": "./dist/library/converter.d.ts"
+        },
+        "./library/utils": {
+            "import": "./dist/library/utils.js",
+            "require": "./dist/library/utils.js",
+            "types": "./dist/library/utils.d.ts"
+        },
+        "./types": {
+            "import": "./dist/types.js",
+            "require": "./dist/types.js",
+            "types": "./dist/types.d.ts"
+        }
     },
+    "scripts": {
+        "build": "tsc",
+        "clean": "node scripts/build-helper.cjs clean",
+        "copy-files": "node scripts/build-helper.cjs copy-files",
+        "prepare-dist": "npm run build && npm run copy-files",
+        "prebuild": "npm run clean",
+        "prepare": "npm run prepare-dist",
+        "prepack": "npm run prepare-dist",
+        "test": "echo \"No tests specified\" && exit 0"
+    },
+    "files": [
+        "dist"
+    ],
     "author": "mathieu-ai <mathieu.lievre@efrei.net>",
     "license": "MIT",
     "dependencies": {

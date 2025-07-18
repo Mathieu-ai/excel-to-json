@@ -51,6 +51,10 @@ switch (command) {
     // Copy files to dist
     copyFile('README.md', 'dist/README.md');
     copyFile('LICENSE', 'dist/LICENSE');
+    // Copy package-lock.json if it exists
+    if (fs.existsSync('package-lock.json')) {
+      copyFile('package-lock.json', 'dist/package-lock.json');
+    }
     
     // Run the package.json creation script
     try {

@@ -3,18 +3,20 @@
         "allowSyntheticDefaultImports": true,
         "declaration": true,
         "esModuleInterop": true,
+        
         "jsx": "react",
         "lib": ["es5", "es2015", "es2016", "dom", "esnext"],
         "types": ["node"],
-        "module": "es2015",
+        "module": "commonjs",
         "moduleResolution": "node",
-        "noImplicitAny": true,
-        "noUnusedLocals": true,
-        "outDir": "dist/esm",
+        "noImplicitAny": false,
+        "noUnusedLocals": false,
+        "outDir": "dist",
         "sourceMap": true,
         "strict": true,
-        "target": "es6",
-        "skipLibCheck": true
+        "target": "es2018",
+        "skipLibCheck": true,
+        "resolveJsonModule": true
     },
     "include": ["src/**/*.ts"]
 }

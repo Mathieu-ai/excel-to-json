@@ -48,15 +48,23 @@ switch (command) {
       fs.mkdirSync('dist', { recursive: true });
     }
     
-    // Copy files
+    // Copy files to dist
     copyFile('README.md', 'dist/README.md');
     copyFile('LICENSE', 'dist/LICENSE');
     
     // Run the package.json creation script
-    require('./create-dist-package.cjs');
+    try {
+      require('./create-dist-package.cjs');
+    } catch (error) {
+      console.error('❌ Failed to create dist package.json:', error.message);
+      process.exit(1);
+    }
     break;
     
   default:
-    console.error('Usage: node build-helper.cjs [clean|copy-files]');
+    console.error('❌ Usage: node build-helper.cjs [clean|copy-files]');
+    console.log('Available commands:');
+    console.log('  clean      - Remove the dist directory');
+    console.log('  copy-files - Copy files to dist and create package.json');
     process.exit(1);
 }

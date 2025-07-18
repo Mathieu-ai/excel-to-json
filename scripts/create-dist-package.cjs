@@ -11,6 +11,7 @@ const distPackageJson = {
     ...mainPackageJson,
     // Remove dist/ prefix from all paths since we're publishing from dist folder
     main: "index.js",
+    module: "index.js",
     types: "index.d.ts",
     exports: {
         ".": {
@@ -18,45 +19,25 @@ const distPackageJson = {
             "require": "./index.js",
             "types": "./index.d.ts"
         },
-        "./core": {
-            "import": "./core/index.js",
-            "require": "./core/index.js",
-            "types": "./core/index.d.ts"
+        "./library": {
+            "import": "./library/index.js",
+            "require": "./library/index.js",
+            "types": "./library/index.d.ts"
         },
-        "./core/string": {
-            "import": "./core/string.js",
-            "require": "./core/string.js",
-            "types": "./core/string.d.ts"
+        "./library/converter": {
+            "import": "./library/converter.js",
+            "require": "./library/converter.js",
+            "types": "./library/converter.d.ts"
         },
-        "./core/array": {
-            "import": "./core/array.js",
-            "require": "./core/array.js",
-            "types": "./core/array.d.ts"
+        "./library/utils": {
+            "import": "./library/utils.js",
+            "require": "./library/utils.js",
+            "types": "./library/utils.d.ts"
         },
-        "./core/object": {
-            "import": "./core/object.js",
-            "require": "./core/object.js",
-            "types": "./core/object.d.ts"
-        },
-        "./core/number": {
-            "import": "./core/number.js",
-            "require": "./core/number.js",
-            "types": "./core/number.d.ts"
-        },
-        "./core/date": {
-            "import": "./core/date.js",
-            "require": "./core/date.js",
-            "types": "./core/date.d.ts"
-        },
-        "./utils": {
-            "import": "./utils/index.js",
-            "require": "./utils/index.js",
-            "types": "./utils/index.d.ts"
-        },
-        "./constants": {
-            "import": "./constants/index.js",
-            "require": "./constants/index.js",
-            "types": "./constants/index.d.ts"
+        "./types": {
+            "import": "./types.js",
+            "require": "./types.js",
+            "types": "./types.d.ts"
         }
     },
     // Only include what's in the dist folder

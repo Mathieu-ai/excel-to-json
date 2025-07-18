@@ -133,6 +133,7 @@ const data = excelToJsonSync('path/to/file.xlsx');
 Asynchronously converts Excel file to JSON.
 
 **Parameters:**
+
 * `input` (string | ArrayBuffer | Buffer): File path, URL, or buffer
 * `options` (ExcelToJsonOptions): Optional configuration
 
@@ -143,6 +144,7 @@ Asynchronously converts Excel file to JSON.
 Synchronously converts local Excel file to JSON.
 
 **Parameters:**
+
 * `filePath` (string): Local file path only
 * `options` (ExcelToJsonOptions): Optional configuration
 

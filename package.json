@@ -1,6 +1,6 @@
 {
     "name": "excel-to-json.mlai",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Transform any excel file into JSON with support for multiple sheets and online files",
     "type": "module",
     "main": "dist/index.js",

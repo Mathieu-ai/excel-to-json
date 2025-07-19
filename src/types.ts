@@ -30,7 +30,6 @@ export interface ExcelToJsonOptions {
     /** Parse and use formula results. Default: true. */
     parseFormulas?: boolean;
 }
-
 /**
  * Result from a single sheet conversion.
  */
@@ -40,7 +39,6 @@ export interface SheetResult {
     /** Array of row objects. */
     data: Record<string, any>[];
 }
-
 /** Excel cell types. */
 export type ExcelCellType =
     | 'n'   // Number

@@ -1,7 +1,7 @@
 {
     "name": "excel-to-json.mlai",
-    "version": "0.2.6",
-    "description": "Transform any excel file into JSON with support for multiple sheets and online files",
+    "version": "0.2.7",
+    "description": "Transform Excel files into JSON with advanced features including nested objects, Google Sheets support, and multiple sheet handling",
     "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -12,7 +12,12 @@
         "csv",
         "converter",
         "sheets",
-        "mlai"
+        "mlai",
+        "nested-objects",
+        "google-sheets",
+        "typescript",
+        "parser",
+        "spreadsheet"
     ],
     "repository": {
         "type": "git",
@@ -20,40 +25,28 @@
     },
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        },
-        "./library": {
-            "import": "./dist/library/index.js",
-            "require": "./dist/library/index.js",
-            "types": "./dist/library/index.d.ts"
-        },
-        "./library/converter": {
-            "import": "./dist/library/converter.js",
-            "require": "./dist/library/converter.js",
-            "types": "./dist/library/converter.d.ts"
-        },
-        "./library/utils": {
-            "import": "./dist/library/utils.js",
-            "require": "./dist/library/utils.js",
-            "types": "./dist/library/utils.d.ts"
+            "require": "./dist/index.js"
         },
         "./types": {
+            "types": "./dist/types.d.ts",
             "import": "./dist/types.js",
-            "require": "./dist/types.js",
-            "types": "./dist/types.d.ts"
+            "require": "./dist/types.js"
         }
     },
     "scripts": {
-        "build": "tsc",
+        "build": "tsup",
+        "build:watch": "tsup --watch",
         "clean": "node scripts/build-helper.cjs clean",
         "copy-files": "node scripts/build-helper.cjs copy-files",
         "prepare-dist": "npm run build && npm run copy-files",
         "prebuild": "npm run clean",
         "prepare": "npm run prepare-dist",
         "prepack": "npm run prepare-dist",
-        "test": "echo \"No tests specified\" && exit 0"
+        "test": "echo \"No tests specified\" && exit 0",
+        "dev": "tsup --watch --onSuccess \"node dist/index.js\"",
+        "typecheck": "tsc --noEmit"
     },
     "files": [
         "dist"
@@ -61,13 +54,14 @@
     "author": "mathieu-ai <mathieu.lievre@efrei.net>",
     "license": "MIT",
     "dependencies": {
-        "generic-functions.mlai": "^0.9.1",
+        "generic-functions.mlai": "^0.9.17",
         "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@types/node": "^18.0.0",
-        "typescript": "^5.0.0",
-        "prettier": "^3.0.0"
+        "prettier": "^3.0.0",
+        "tsup": "^8.5.0",
+        "typescript": "^5.0.0"
     },
     "engines": {
         "node": ">=14.0.0"

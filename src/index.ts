@@ -15,6 +15,7 @@ export { DataCleaner } from './utils/data-cleaner';
 export { NestedObjectBuilder } from './utils/nested-object-builder';
 export { HeaderProcessor } from './utils/header-processor';
 export { DateFormatter } from './utils/date-formatter';
+export { CommonPatterns } from './utils/common-patterns';
 export { SpreadsheetPerformanceMonitor } from './validators/performance-monitor';
 export { SpreadsheetDataValidator } from './validators/data-validator';
 export * from './types';

@@ -8,8 +8,10 @@ import {
     keys,
     values,
     entries,
-    map
+    map,
+    reduce
 } from 'generic-functions.mlai';
+import { CommonPatterns } from './common-patterns';
 
 // ANCHOR (File Scope)
 /**
@@ -46,15 +48,24 @@ export class DataCleaner {
         if (skipEmptyColumns && cleanedData.length > 0) {
             const emptyColumns = this.identifyEmptyColumns(cleanedData);
             if (emptyColumns.length > 0) {
-                cleanedData = map(cleanedData, row => {
-                    const cleanedRow: Record<string, any> = {};
-                    forEach(entries(row), ([key, value]) => {
-                        if (!emptyColumns.includes(key)) {
-                            cleanedRow[key] = value;
-                        }
-                    });
-                    return cleanedRow;
-                });
+                cleanedData = reduce(
+                    cleanedData,
+                    (result: Record<string, any>[], row: Record<string, any>) => {
+                        const cleanedRow = reduce(
+                            entries(row),
+                            (acc: Record<string, any>, [key, value]: [string, any]) => {
+                                if (!emptyColumns.includes(key)) {
+                                    acc[key] = value;
+                                }
+                                return acc;
+                            },
+                            {} as Record<string, any>
+                        );
+                        result.push(cleanedRow);
+                        return result;
+                    },
+                    [] as Record<string, any>[]
+                );
             }
         }
 
@@ -73,28 +84,21 @@ export class DataCleaner {
      * hasNonEmptyValue({'1': 5, name: null, age: null}, true) // false (only index column has data)
      */
     private hasNonEmptyValue (row: Record<string, any>, ignoreIndexOnlyRows: boolean = true): boolean {
-        // Get all non-empty values
-        const nonEmptyValues = entries(row).filter(([key, value]) =>
-            value !== null &&
-            value !== undefined &&
-            value !== '' &&
-            (!isString(value) || trim(value) !== '')
-        );
+        // Use common pattern for getting non-empty entries
+        const nonEmptyEntries = CommonPatterns.getNonEmptyEntries(row);
 
         // If no non-empty values, row is empty
-        if (!nonEmptyValues.length) {
+        if (!nonEmptyEntries.length) {
             return false;
         }
 
         // If only one non-empty value and it's likely an index column, consider row empty
-        if (ignoreIndexOnlyRows && nonEmptyValues.length === 1) {
-            const [key, value] = nonEmptyValues[0];
+        if (ignoreIndexOnlyRows && nonEmptyEntries.length === 1) {
+            const [key, value] = nonEmptyEntries[0];
+            return !this.isLikelyIndexColumn(key, value);
+        }
 
-            // Check if this looks like an index/sequential column
-            if (this.isLikelyIndexColumn(key, value)) {
-                return false;
-            }
-        } return true;
+        return true;
     }
 
     /**
@@ -135,27 +139,29 @@ export class DataCleaner {
     private identifyEmptyColumns (data: Record<string, any>[]): string[] {
         if (isEmpty(data)) return [];
 
-        const allKeys = new Set<string>();
-        forEach(data, row => {
-            forEach(keys(row), key => allKeys.add(key));
-        });
+        // Get all unique column keys using reduce for better performance
+        const allKeys = reduce(
+            data,
+            (keySet: Set<string>, row: Record<string, any>) => {
+                forEach(keys(row), key => keySet.add(key));
+                return keySet;
+            },
+            new Set<string>()
+        );
 
-        const emptyColumns: string[] = [];
+        // Use reduce to identify empty columns in one pass
+        return reduce(
+            Array.from(allKeys),
+            (emptyColumns: string[], key: string) => {
+                const hasNonEmptyValue = some(data, row => CommonPatterns.isNonEmptyValue(row[key]));
 
-        forEach(Array.from(allKeys), key => {
-            const hasNonEmptyValue = some(data, row => {
-                const value = row[key];
-                return value !== null &&
-                    value !== undefined &&
-                    value !== '' &&
-                    (!isString(value) || trim(value) !== '');
-            });
+                if (!hasNonEmptyValue) {
+                    emptyColumns.push(key);
+                }
 
-            if (!hasNonEmptyValue) {
-                emptyColumns.push(key);
-            }
-        });
-
-        return emptyColumns;
+                return emptyColumns;
+            },
+            [] as string[]
+        );
     }
 }

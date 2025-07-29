@@ -23,6 +23,7 @@ import {
     some,
     parseFloat
 } from 'generic-functions.mlai';
+import { CommonPatterns } from '../utils/common-patterns';
 
 // ANCHOR Enhanced CSV parser with better performance and error handling capabilities
 export class CsvParser {
@@ -78,18 +79,12 @@ export class CsvParser {
 
         if (sampleLines.length < 2) return ','; // NOTE Default fallback
 
-        let bestDelimiter = ',';
-        let bestScore = 0;
-
-        for (const delimiter of commonDelimiters) {
-            const score = this.calculateDelimiterScore(sampleLines, delimiter);
-            if (score > bestScore) {
-                bestScore = score;
-                bestDelimiter = delimiter;
-            }
-        }
-
-        return bestDelimiter;
+        // Use common pattern for finding best option
+        return CommonPatterns.findBestOption(
+            commonDelimiters,
+            delimiter => this.calculateDelimiterScore(sampleLines, delimiter),
+            ','
+        );
     }
 
     /**
@@ -175,23 +170,27 @@ export class CsvParser {
         // NOTE Parse header row
         const headers = this.parseLineFields(lines[0], fieldDelimiter, quoteCharacter, escapeCharacter, shouldTrimFields);
 
-        // NOTE Parse data rows
-        const result: Record<string, any>[] = [];
+        // NOTE Parse data rows using reduce for better performance
+        return reduce(
+            slice(lines, 1),
+            (result: Record<string, any>[], line: string) => {
+                const fields = this.parseLineFields(line, fieldDelimiter, quoteCharacter, escapeCharacter, shouldTrimFields);
 
-        for (let i = 1; i < lines.length; i++) {
-            const fields = this.parseLineFields(lines[i], fieldDelimiter, quoteCharacter, escapeCharacter, shouldTrimFields);
-            const row: Record<string, any> = {};
+                const row = reduce(
+                    headers,
+                    (rowObj: Record<string, any>, header: string, index: number) => {
+                        const value = index < fields.length ? fields[index] : '';
+                        rowObj[header] = this.inferAndConvertType(value);
+                        return rowObj;
+                    },
+                    {} as Record<string, any>
+                );
 
-            for (let j = 0; j < headers.length; j++) {
-                const header = headers[j];
-                const value = j < fields.length ? fields[j] : '';
-                row[header] = this.inferAndConvertType(value);
-            }
-
-            result.push(row);
-        }
-
-        return result;
+                result.push(row);
+                return result;
+            },
+            [] as Record<string, any>[]
+        );
     }
 
     /**
@@ -251,26 +250,54 @@ export class CsvParser {
 
         if (isEmpty(trimmedValue)) return null;
 
-        // NOTE Boolean detection
-        if (CSV_BOOLEAN_VALUES.ALL_BOOLEAN_VALUES.includes(toLowerCase(trimmedValue) as typeof CSV_BOOLEAN_VALUES.ALL_BOOLEAN_VALUES[number])) {
-            return CSV_BOOLEAN_VALUES.TRUE_VALUES.includes(toLowerCase(trimmedValue) as typeof CSV_BOOLEAN_VALUES.TRUE_VALUES[number]);
+        // Use more efficient type detection patterns
+        const typeDetectionResult = this.detectValueType(trimmedValue);
+
+        switch (typeDetectionResult.type) {
+            case 'boolean':
+                return typeDetectionResult.value;
+            case 'number':
+                return typeDetectionResult.value;
+            case 'date':
+                return typeDetectionResult.value;
+            default:
+                return trimmedValue;
+        }
+    }
+
+    /**
+     * Detect the type and convert value accordingly
+     * @param {string} value - Trimmed value to analyze
+     * @returns {{ type: string, value: any }} Type detection result
+     */
+    private detectValueType (value: string): { type: string; value: any } {
+        // Boolean detection
+        const lowerValue = toLowerCase(value);
+        if (CSV_BOOLEAN_VALUES.ALL_BOOLEAN_VALUES.includes(lowerValue as typeof CSV_BOOLEAN_VALUES.ALL_BOOLEAN_VALUES[number])) {
+            return {
+                type: 'boolean',
+                value: CSV_BOOLEAN_VALUES.TRUE_VALUES.includes(lowerValue as typeof CSV_BOOLEAN_VALUES.TRUE_VALUES[number])
+            };
         }
 
-        // NOTE Number detection
-        if (!isNaN(Number(trimmedValue)) && trimmedValue !== '') {
-            const num = Number(trimmedValue);
-            return isNumber(num) && Number.isInteger(num) ? num : parseFloat(trimmedValue);
+        // Number detection
+        if (!isNaN(Number(value)) && value !== '') {
+            const num = Number(value);
+            return {
+                type: 'number',
+                value: isNumber(num) && Number.isInteger(num) ? num : parseFloat(value)
+            };
         }
 
-        // NOTE Date detection (basic heuristic)
-        if (this.looksLikeDate(trimmedValue)) {
-            const dateValue = new Date(trimmedValue);
+        // Date detection (basic heuristic)
+        if (this.looksLikeDate(value)) {
+            const dateValue = new Date(value);
             if (!isNaN(dateValue.getTime())) {
-                return dateValue;
+                return { type: 'date', value: dateValue };
             }
         }
 
-        return trimmedValue;
+        return { type: 'string', value };
     }
 
     /**

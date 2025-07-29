@@ -1,6 +1,6 @@
 {
     "name": "excel-to-json.mlai",
-    "version": "0.2.7",
+    "version": "0.2.8",
     "description": "Transform Excel files into JSON with advanced features including nested objects, Google Sheets support, and multiple sheet handling",
     "main": "dist/index.js",
     "module": "dist/index.js",

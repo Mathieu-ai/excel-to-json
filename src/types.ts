@@ -228,6 +228,9 @@ export interface ConversionMetadata {
     /** Configuration used for conversion. */
     conversionConfig?: SpreadsheetConversionConfig;
 
+    /** Whether streaming was used for processing. */
+    streamingUsed?: boolean;
+
     /** Processing timestamp. */
     processedAt?: Date;
 }
@@ -367,6 +370,20 @@ export interface StreamingConfiguration {
 
     /** Maximum number of worker threads. */
     maxWorkerThreads: number;
+}
+
+/**
+ * Options for streaming processing.
+ */
+export interface StreamingOptions {
+    /** Batch size for processing chunks of data. */
+    batchSize?: number;
+
+    /** Whether to enable concurrent processing of batches. */
+    enableConcurrency?: boolean;
+
+    /** Maximum number of concurrent batches to process. */
+    maxConcurrency?: number;
 }
 
 /**

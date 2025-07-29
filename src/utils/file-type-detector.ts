@@ -73,17 +73,13 @@ export class FileTypeDetector {
      * @since 0.2.6
      */
     private static isFilePath (input: string): boolean {
-        // NOTE File extension patterns
-        if (URL_PATTERNS.FILE_EXTENSION_REGEX.test(input)) return true;
+        const patterns = [
+            { test: () => URL_PATTERNS.FILE_EXTENSION_REGEX.test(input), description: 'file extension' },
+            { test: () => URL_PATTERNS.PATH_REGEX.test(input), description: 'path pattern' },
+            { test: () => /^https?:\/\//i.test(input), description: 'URL pattern' }
+        ];
 
-        // NOTE Path patterns (Windows/Unix)
-        if (URL_PATTERNS.PATH_REGEX.test(input)) return true;
-
-        // NOTE URL patterns
-        const urlPattern = /^https?:\/\//i;
-        if (urlPattern.test(input)) return true;
-
-        return false;
+        return some(patterns, pattern => pattern.test());
     }
 
     /**
@@ -96,19 +92,21 @@ export class FileTypeDetector {
         const lines = slice(split(content, '\n'), 0, 10); // NOTE Check first 10 lines
         if (lines.length < 2) return false;
 
-        // ANCHOR Try common delimiters
+        // ANCHOR Try common delimiters using reduce for better performance
         const commonDelimiters = [',', ';', '\t', '|'];
 
-        for (const delimiter of commonDelimiters) {
-            const consistency = this.calculateDelimiterConsistency(lines, delimiter);
-            const hasMultipleColumns = this.hasMultipleColumns(lines, delimiter);
+        return reduce(
+            commonDelimiters,
+            (found: boolean, delimiter: string) => {
+                if (found) return true; // Short-circuit if already found
 
-            if (consistency > 0.8 && hasMultipleColumns) {
-                return true;
-            }
-        }
+                const consistency = this.calculateDelimiterConsistency(lines, delimiter);
+                const hasMultipleColumns = this.hasMultipleColumns(lines, delimiter);
 
-        return false;
+                return consistency > 0.8 && hasMultipleColumns;
+            },
+            false
+        );
     }
 
     /**

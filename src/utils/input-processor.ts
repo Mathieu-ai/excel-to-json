@@ -26,26 +26,72 @@ export class InputProcessor {
      * @since 0.8.0
      */
     public static async prepareInputForProcessing (input: SpreadsheetInput): Promise<ArrayBuffer | string> {
-        if (isString(input)) {
-            if (NetworkHandler.isValidUrl(input)) {
+        switch (true) {
+            case isString(input):
+                return this.processStringInputForProcessing(input as string);
+            case input instanceof ArrayBuffer:
+                return input;
+            case Buffer.isBuffer(input):
+                return this.convertBufferToArrayBuffer(input as Buffer);
+            case input instanceof Uint8Array:
+                return this.convertUint8ArrayToArrayBuffer(input);
+            default:
+                throw new Error(ERROR_MESSAGES.UNSUPPORTED_INPUT_TYPE);
+        }
+    }
+
+    /**
+     * Process string input for processing (URL, file path, or content)
+     * @param {string} input - String input to process
+     * @returns {Promise<ArrayBuffer | string>} Processed input
+     * @private
+     * @since 0.8.0
+     */
+    private static async processStringInputForProcessing (input: string): Promise<ArrayBuffer | string> {
+        switch (true) {
+            case NetworkHandler.isValidUrl(input):
                 return await NetworkHandler.fetchFileWithRetry(input);
-            } else if (this.isFilePath(input)) {
-                const fs = await import('fs');
-                const buffer = fs.readFileSync(input);
-                return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
-            } else {
+            case this.isFilePath(input):
+                return this.readFileAsArrayBuffer(input);
+            default:
                 // NOTE (File Scope): Assume it's content
                 return input;
-            }
-        } else if (input instanceof ArrayBuffer) {
-            return input;
-        } else if (Buffer.isBuffer(input)) {
-            return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
-        } else if (input instanceof Uint8Array) {
-            return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
-        } else {
-            throw new Error(ERROR_MESSAGES.UNSUPPORTED_INPUT_TYPE);
         }
+    }
+
+    /**
+     * Read file from path as ArrayBuffer
+     * @param {string} filePath - File path to read
+     * @returns {Promise<ArrayBuffer>} File content as ArrayBuffer
+     * @private
+     * @since 0.8.0
+     */
+    private static async readFileAsArrayBuffer (filePath: string): Promise<ArrayBuffer> {
+        const fs = await import('fs');
+        const buffer = fs.readFileSync(filePath);
+        return this.convertBufferToArrayBuffer(buffer);
+    }
+
+    /**
+     * Convert Buffer to ArrayBuffer
+     * @param {Buffer} buffer - Buffer to convert
+     * @returns {ArrayBuffer} Converted ArrayBuffer
+     * @private
+     * @since 0.8.0
+     */
+    private static convertBufferToArrayBuffer (buffer: Buffer): ArrayBuffer {
+        return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+    }
+
+    /**
+     * Convert Uint8Array to ArrayBuffer
+     * @param {Uint8Array} uint8Array - Uint8Array to convert
+     * @returns {ArrayBuffer} Converted ArrayBuffer
+     * @private
+     * @since 0.8.0
+     */
+    private static convertUint8ArrayToArrayBuffer (uint8Array: Uint8Array): ArrayBuffer {
+        return uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer;
     }
 
     /**
@@ -61,28 +107,70 @@ export class InputProcessor {
         };
 
         if (isString(input)) {
-            info.source = input;
+            return this.processStringInput(input, info);
+        }
 
-            if (NetworkHandler.isValidUrl(input)) {
+        return this.processBufferInput(input, info);
+    }
+
+    /**
+     * Process string input to determine file type and source
+     * @param {string} input - String input to process
+     * @param {SourceFileInfo} info - Base file info object
+     * @returns {SourceFileInfo} Updated file info
+     * @private
+     * @since 0.8.0
+     */
+    private static processStringInput (input: string, info: SourceFileInfo): SourceFileInfo {
+        info.source = input;
+
+        const lowerInput = toLowerCase(input);
+
+        switch (true) {
+            case NetworkHandler.isValidUrl(input):
                 info.fileType = FILE_TYPES.URL;
-            } else if (endsWith(toLowerCase(input), FILE_EXTENSIONS.CSV)) {
+                break;
+            case endsWith(lowerInput, FILE_EXTENSIONS.CSV):
                 info.fileType = FILE_TYPES.CSV;
-            } else if (endsWith(toLowerCase(input), FILE_EXTENSIONS.XLSX)) {
+                break;
+            case endsWith(lowerInput, FILE_EXTENSIONS.XLSX):
                 info.fileType = FILE_TYPES.XLSX;
-            } else if (endsWith(toLowerCase(input), FILE_EXTENSIONS.XLS)) {
+                break;
+            case endsWith(lowerInput, FILE_EXTENSIONS.XLS):
                 info.fileType = FILE_TYPES.XLS;
-            } else if (FileTypeDetector.isCsvContent(input)) {
+                break;
+            case FileTypeDetector.isCsvContent(input):
                 info.fileType = FILE_TYPES.CSV;
-            }
-        } else {
-            info.source = 'buffer';
-            info.fileType = FILE_TYPES.BUFFER;
+                break;
+            default:
+                info.fileType = FILE_TYPES.BUFFER;
+        }
 
-            if (Buffer.isBuffer(input)) {
-                info.fileSizeBytes = input.length;
-            } else if (input instanceof ArrayBuffer) {
+        return info;
+    }
+
+    /**
+     * Process buffer input to determine file size and type
+     * @param {SpreadsheetInput} input - Buffer input to process
+     * @param {SourceFileInfo} info - Base file info object
+     * @returns {SourceFileInfo} Updated file info
+     * @private
+     * @since 0.8.0
+     */
+    private static processBufferInput (input: SpreadsheetInput, info: SourceFileInfo): SourceFileInfo {
+        info.source = 'buffer';
+        info.fileType = FILE_TYPES.BUFFER;
+
+        switch (true) {
+            case Buffer.isBuffer(input):
+                info.fileSizeBytes = (input as Buffer).length;
+                break;
+            case input instanceof ArrayBuffer:
                 info.fileSizeBytes = input.byteLength;
-            }
+                break;
+            case input instanceof Uint8Array:
+                info.fileSizeBytes = input.byteLength;
+                break;
         }
 
         return info;

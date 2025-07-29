@@ -6,7 +6,8 @@ import {
     isEmpty,
     isString,
     now,
-    uniqueId
+    uniqueId,
+    reduce
 } from 'generic-functions.mlai';
 
 import {
@@ -78,14 +79,21 @@ export class HeaderProcessor {
      * HeaderProcessor.ensureUniqueHeaders(['a', 'b', 'a']) // ['a', 'b', 'a_1']
      */
     public static ensureUniqueHeaders (headers: string[]): string[] {
-        const seen = new Map<string, number>();
+        const { result } = reduce(
+            headers,
+            (acc: { seen: Map<string, number>; result: string[] }, header: string) => {
+                const normalizedHeader = this.normalizeHeaderForProcessing(header);
+                const count = acc.seen.get(normalizedHeader) || 0;
+                acc.seen.set(normalizedHeader, count + 1);
 
-        return headers.map(header => {
-            const normalizedHeader = this.normalizeHeaderForProcessing(header);
-            const count = seen.get(normalizedHeader) || 0;
-            seen.set(normalizedHeader, count + 1);
+                const uniqueHeader = count === 0 ? header : `${header}_${count}`;
+                acc.result.push(uniqueHeader);
 
-            return count === 0 ? header : `${header}_${count}`;
-        });
+                return acc;
+            },
+            { seen: new Map<string, number>(), result: [] as string[] }
+        );
+
+        return result;
     }
 }

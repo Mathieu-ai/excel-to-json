@@ -8,7 +8,8 @@ import {
     isObject,
     isNull,
     keys,
-    parseInt
+    parseInt,
+    reduce
 } from 'generic-functions.mlai';
 
 import { NUMERIC_PATTERNS } from '../constants';
@@ -41,8 +42,15 @@ export class NestedObjectBuilder {
             return data; // NOTE (File Scope): No nested objects needed
         }
 
-        // NOTE (File Scope): Process with optimizations
-        return map(data, row => this.processRowForNesting(row));
+        // NOTE (File Scope): Process with optimizations using reduce
+        return reduce(
+            data,
+            (result: Record<string, any>[], row: Record<string, any>) => {
+                result.push(this.processRowForNesting(row));
+                return result;
+            },
+            [] as Record<string, any>[]
+        );
     }
 
     /**
@@ -52,18 +60,19 @@ export class NestedObjectBuilder {
      * @since 0.8.0
      */
     private processRowForNesting (row: Record<string, any>): Record<string, any> {
-        const result: Record<string, any> = {};
-
-        forEach(entries(row), ([key, value]) => {
-            if (key.includes('.')) {
-                const path = split(key, '.');
-                this.setNestedValue(result, path, value);
-            } else {
-                result[key] = value;
-            }
-        });
-
-        return result;
+        return reduce(
+            entries(row),
+            (result: Record<string, any>, [key, value]: [string, any]) => {
+                if (key.includes('.')) {
+                    const path = split(key, '.');
+                    this.setNestedValue(result, path, value);
+                } else {
+                    result[key] = value;
+                }
+                return result;
+            },
+            {} as Record<string, any>
+        );
     }
 
     /**
@@ -76,24 +85,24 @@ export class NestedObjectBuilder {
      * @since 0.8.0
      */
     private setNestedValue (obj: Record<string, any>, path: string[], value: any): void {
-        let current = obj;
+        // Navigate to the parent of the target using reduce
+        const current = reduce(
+            path.slice(0, -1),
+            (currentObj: Record<string, any>, key: string, index: number) => {
+                const nextKey = path[index + 1];
+                const isNextKeyNumeric = nextKey && NUMERIC_PATTERNS.NUMERIC_INDEX_REGEX.test(nextKey);
 
-        for (let i = 0; i < path.length - 1; i++) {
-            const key = path[i];
-            const nextKey = path[i + 1];
-
-            // Check if next key is a numeric index (for arrays)
-            const isNextKeyNumeric = NUMERIC_PATTERNS.NUMERIC_INDEX_REGEX.test(nextKey);
-
-            if (!(key in current) || (!isObject(current[key]) && !Array.isArray(current[key])) || isNull(current[key])) {
-                current[key] = isNextKeyNumeric ? [] : {};
-            }
-            current = current[key];
-        }
+                if (!(key in currentObj) || (!isObject(currentObj[key]) && !Array.isArray(currentObj[key])) || isNull(currentObj[key])) {
+                    currentObj[key] = isNextKeyNumeric ? [] : {};
+                }
+                return currentObj[key];
+            },
+            obj
+        );
 
         const lastKey = path[path.length - 1];
 
-        // If the last key is numeric and current is an array, treat as array index
+        // Set the final value
         if (NUMERIC_PATTERNS.NUMERIC_INDEX_REGEX.test(lastKey) && Array.isArray(current)) {
             const index = parseInt(lastKey);
             current[index] = value;

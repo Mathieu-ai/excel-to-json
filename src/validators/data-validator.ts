@@ -56,26 +56,18 @@ export class SpreadsheetDataValidator {
             return { isValid: false, errors };
         }
 
-        if (isString(input)) {
-            // NOTE (File Scope): Validate file path or URL
-            if (trim(input).length === 0) {
-                errors.push(this.createValidationError('Input', -1, 'File path or URL cannot be empty', input));
-            } else if (this.isUrl(input)) {
-                if (!this.isValidUrl(input)) {
-                    errors.push(this.createValidationError('Input', -1, 'Invalid URL format', input));
-                }
-            } else {
-                // NOTE (File Scope): Check for invalid file path characters
-                if (this.hasInvalidPathCharacters(input)) {
-                    errors.push(this.createValidationError('Input', -1, 'File path contains invalid characters', input));
-                }
-            }
-        } else if (Buffer.isBuffer(input) || input instanceof ArrayBuffer || input instanceof Uint8Array) {
-            const length = Buffer.isBuffer(input) ? input.length :
-                input instanceof ArrayBuffer ? input.byteLength : input.length;
-            if (length === 0) {
-                errors.push(this.createValidationError('Input', -1, 'Input buffer is empty', input));
-            }
+        // NOTE (File Scope): Use switch pattern for input type validation
+        switch (true) {
+            case isString(input):
+                this.validateStringInput(input as string, errors);
+                break;
+            case Buffer.isBuffer(input):
+            case input instanceof ArrayBuffer:
+            case input instanceof Uint8Array:
+                this.validateBufferInput(input, errors);
+                break;
+            default:
+                errors.push(this.createValidationError('Input', -1, 'Unsupported input type', input));
         }
 
         return {
@@ -83,6 +75,65 @@ export class SpreadsheetDataValidator {
             errors: errors.length > 0 ? errors : undefined,
             warnings: warnings.length > 0 ? warnings : undefined
         };
+    }
+
+    /**
+     * Validate string input (URL or file path)
+     * @param {string} input - String input to validate
+     * @param {ValidationError[]} errors - Errors array to populate
+     * @private
+     * @since 0.8.0
+     */
+    private validateStringInput (input: string, errors: ValidationError[]): void {
+        const trimmedInput = trim(input);
+
+        if (trimmedInput.length === 0) {
+            errors.push(this.createValidationError('Input', -1, 'File path or URL cannot be empty', input));
+            return;
+        }
+
+        if (this.isUrl(input)) {
+            if (!this.isValidUrl(input)) {
+                errors.push(this.createValidationError('Input', -1, 'Invalid URL format', input));
+            }
+        } else if (this.hasInvalidPathCharacters(input)) {
+            errors.push(this.createValidationError('Input', -1, 'File path contains invalid characters', input));
+        }
+    }
+
+    /**
+     * Validate buffer input
+     * @param {SpreadsheetInput} input - Buffer input to validate
+     * @param {ValidationError[]} errors - Errors array to populate
+     * @private
+     * @since 0.8.0
+     */
+    private validateBufferInput (input: SpreadsheetInput, errors: ValidationError[]): void {
+        const length = this.getBufferLength(input);
+
+        if (length === 0) {
+            errors.push(this.createValidationError('Input', -1, 'Input buffer is empty', input));
+        }
+    }
+
+    /**
+     * Get buffer length for different buffer types
+     * @param {SpreadsheetInput} input - Buffer input
+     * @returns {number} Buffer length
+     * @private
+     * @since 0.8.0
+     */
+    private getBufferLength (input: SpreadsheetInput): number {
+        switch (true) {
+            case Buffer.isBuffer(input):
+                return (input as Buffer).length;
+            case input instanceof ArrayBuffer:
+                return input.byteLength;
+            case input instanceof Uint8Array:
+                return input.length;
+            default:
+                return 0;
+        }
     }
 
     /**
@@ -106,37 +157,9 @@ export class SpreadsheetDataValidator {
             return { isValid: false, errors };
         }
 
-        // NOTE (File Scope): Custom row validation
-        if (isFunction(this.configuration.rowValidator)) {
-            try {
-                const customResult = this.configuration.rowValidator(row, rowIndex);
-                if (!customResult.isValid && customResult.errors) {
-                    errors.push(...customResult.errors);
-                }
-                if (customResult.warnings) {
-                    warnings.push(...customResult.warnings);
-                }
-            } catch (error) {
-                errors.push(this.createValidationError(sheetName, rowIndex, `Row validation error: ${error instanceof Error ? error.message : 'Unknown error'}`, row));
-            }
-        }
-
-        // NOTE (File Scope): Cell-level validation
-        if (isFunction(this.configuration.cellValidator)) {
-            entries(row).forEach(([columnName, value]) => {
-                try {
-                    const cellValidation = this.configuration.cellValidator!(value, columnName, rowIndex);
-                    if (!cellValidation.isValid && cellValidation.errors) {
-                        errors.push(...cellValidation.errors);
-                    }
-                    if (cellValidation.warnings) {
-                        warnings.push(...cellValidation.warnings);
-                    }
-                } catch (error) {
-                    errors.push(this.createValidationError(sheetName, rowIndex, `Cell validation error for ${columnName}: ${error instanceof Error ? error.message : 'Unknown error'}`, value, columnName));
-                }
-            });
-        }
+        // NOTE (File Scope): Apply validation pipeline
+        this.applyCustomRowValidation(row, rowIndex, sheetName, errors, warnings);
+        this.applyCellLevelValidation(row, rowIndex, sheetName, errors, warnings);
 
         // NOTE (File Scope): Collect errors if configured
         if (this.configuration.collectValidationErrors) {
@@ -149,6 +172,87 @@ export class SpreadsheetDataValidator {
             errors: errors.length > 0 ? errors : undefined,
             warnings: warnings.length > 0 ? warnings : undefined
         };
+    }
+
+    /**
+     * Apply custom row validation if configured
+     * @param {Record<string, any>} row - Row data
+     * @param {number} rowIndex - Row index
+     * @param {string} sheetName - Sheet name
+     * @param {ValidationError[]} errors - Errors array
+     * @param {string[]} warnings - Warnings array
+     * @private
+     * @since 0.8.0
+     */
+    private applyCustomRowValidation (
+        row: Record<string, any>,
+        rowIndex: number,
+        sheetName: string,
+        errors: ValidationError[],
+        warnings: string[]
+    ): void {
+        if (!isFunction(this.configuration.rowValidator)) return;
+
+        try {
+            const customResult = this.configuration.rowValidator(row, rowIndex);
+            if (!customResult.isValid && customResult.errors) {
+                errors.push(...customResult.errors);
+            }
+            if (customResult.warnings) {
+                warnings.push(...customResult.warnings);
+            }
+        } catch (error) {
+            errors.push(this.createValidationError(
+                sheetName,
+                rowIndex,
+                `Row validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                row
+            ));
+        }
+    }
+
+    /**
+     * Apply cell-level validation using reduce pattern
+     * @param {Record<string, any>} row - Row data
+     * @param {number} rowIndex - Row index
+     * @param {string} sheetName - Sheet name
+     * @param {ValidationError[]} errors - Errors array
+     * @param {string[]} warnings - Warnings array
+     * @private
+     * @since 0.8.0
+     */
+    private applyCellLevelValidation (
+        row: Record<string, any>,
+        rowIndex: number,
+        sheetName: string,
+        errors: ValidationError[],
+        warnings: string[]
+    ): void {
+        if (!isFunction(this.configuration.cellValidator)) return;
+
+        entries(row).reduce(
+            (acc, [columnName, value]) => {
+                try {
+                    const cellValidation = this.configuration.cellValidator!(value, columnName, rowIndex);
+                    if (!cellValidation.isValid && cellValidation.errors) {
+                        acc.errors.push(...cellValidation.errors);
+                    }
+                    if (cellValidation.warnings) {
+                        acc.warnings.push(...cellValidation.warnings);
+                    }
+                } catch (error) {
+                    acc.errors.push(this.createValidationError(
+                        sheetName,
+                        rowIndex,
+                        `Cell validation error for ${columnName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                        value,
+                        columnName
+                    ));
+                }
+                return acc;
+            },
+            { errors, warnings }
+        );
     }
 
     /**
